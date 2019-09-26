@@ -1,3 +1,11 @@
 <resources>
     <string name="app_name">Lesson4Retrofit</string>
+    <string name="privacy_icon_desc">is repo private icon</string>
+    <string name="name">Name:</string>
+    <string name="description">Description:</string>
+    <string name="language">Language:</string>
+    <string name="url">Url:</string>
+    <string name="check_internet">Check Internet connection</string>
+    <string name="fill_user_name">Please fill username</string>
+    <string name="error">Error</string>
 </resources>
