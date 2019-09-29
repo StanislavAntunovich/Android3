@@ -8,4 +8,11 @@
     <string name="check_internet">Check Internet connection</string>
     <string name="fill_user_name">Please fill username</string>
     <string name="error">Error</string>
+    <string name="save_in_room">save in room</string>
+    <string name="load_from_room">load from room</string>
+    <string name="save_in_realm">save in realm</string>
+    <string name="load_from_realm">load from realm</string>
+    <string name="load">load</string>
+    <string name="items_count">Items count:</string>
+    <string name="time">Time:</string>
 </resources>
