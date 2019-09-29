@@ -15,4 +15,5 @@
     <string name="load">load</string>
     <string name="items_count">Items count:</string>
     <string name="time">Time:</string>
+    <string name="et_hint">enter user name of leave empty to load all</string>
 </resources>

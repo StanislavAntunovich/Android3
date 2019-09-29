@@ -28,7 +28,7 @@ import geekbrains.ru.lesson4retrofit.adapters.UsersAdapter;
 import geekbrains.ru.lesson4retrofit.data.RepoEntity;
 import geekbrains.ru.lesson4retrofit.data.UserEntity;
 import geekbrains.ru.lesson4retrofit.data.room.RoomDB;
-import geekbrains.ru.lesson4retrofit.rest.RestApi;
+import geekbrains.ru.lesson4retrofit.rest.RestAPI;
 import io.reactivex.Single;
 import io.reactivex.SingleObserver;
 import io.reactivex.android.schedulers.AndroidSchedulers;
@@ -55,7 +55,7 @@ public class MainActivity extends AppCompatActivity {
             .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
             .addConverterFactory(GsonConverterFactory.create())
             .build();
-    private RestApi api = retrofit.create(RestApi.class);
+    private RestAPI api = retrofit.create(RestAPI.class);
 
     private SingleObserver<Double> loadObserver = new SingleObserver<Double>() {
         @Override
@@ -106,6 +106,19 @@ public class MainActivity extends AppCompatActivity {
 
         roomDB = Room.databaseBuilder(getApplicationContext(), RoomDB.class, DB_NAME).build();
 
+        initViews();
+
+        initRecycler();
+    }
+
+    private void initRecycler() {
+        adapter = new UsersAdapter();
+        RecyclerView recyclerView = findViewById(R.id.rv_repos);
+        recyclerView.setAdapter(adapter);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+    }
+
+    private void initViews() {
         etUserName = findViewById(R.id.editText);
         progressBar = findViewById(R.id.progressBar);
 
@@ -123,11 +136,6 @@ public class MainActivity extends AppCompatActivity {
 
         Button btnLoadRealm = findViewById(R.id.btn_load_realm);
         btnLoadRealm.setOnClickListener(v -> loadFromRealm());
-
-        adapter = new UsersAdapter();
-        RecyclerView recyclerView = findViewById(R.id.rv_repos);
-        recyclerView.setAdapter(adapter);
-        recyclerView.setLayoutManager(new LinearLayoutManager(this));
     }
 
     @Override
@@ -136,7 +144,8 @@ public class MainActivity extends AppCompatActivity {
         super.onDestroy();
     }
 
-    private void startRepoActivity(RepoEntity model) {
+    //TODO
+    private void startUserReposActivity(RepoEntity model) {
         Intent intent = new Intent(this, RepoActivity.class);
         intent.putExtra(RepoActivity.REPO_MODEL_KEY, model);
         startActivity(intent);
