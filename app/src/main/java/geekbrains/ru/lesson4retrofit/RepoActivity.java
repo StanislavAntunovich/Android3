@@ -5,7 +5,7 @@ import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import geekbrains.ru.lesson4retrofit.data.RepoEntity;
+import geekbrains.ru.lesson4retrofit.data.entities.RepoEntity;
 
 public class RepoActivity extends AppCompatActivity {
     public static final String REPO_MODEL_KEY = "repo_model_key";

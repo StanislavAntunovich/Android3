@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import geekbrains.ru.lesson4retrofit.R;
-import geekbrains.ru.lesson4retrofit.data.RepoEntity;
+import geekbrains.ru.lesson4retrofit.data.entities.RepoEntity;
 
 public class ReposAdapter extends RecyclerView.Adapter<ReposAdapter.ReposViewHolder> {
     private List<RepoEntity> data;

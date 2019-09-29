@@ -20,21 +20,14 @@ import androidx.room.Room;
 
 import com.jakewharton.retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
 
-import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import geekbrains.ru.lesson4retrofit.adapters.UsersAdapter;
-import geekbrains.ru.lesson4retrofit.data.RepoEntity;
-import geekbrains.ru.lesson4retrofit.data.UserEntity;
+import geekbrains.ru.lesson4retrofit.data.DataWorker;
+import geekbrains.ru.lesson4retrofit.data.entities.RepoEntity;
+import geekbrains.ru.lesson4retrofit.data.entities.UserEntity;
 import geekbrains.ru.lesson4retrofit.data.room.RoomDB;
 import geekbrains.ru.lesson4retrofit.rest.RestAPI;
-import io.reactivex.Single;
-import io.reactivex.SingleObserver;
-import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.disposables.CompositeDisposable;
-import io.reactivex.disposables.Disposable;
-import io.reactivex.schedulers.Schedulers;
 import io.realm.Realm;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
@@ -42,57 +35,13 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 public class MainActivity extends AppCompatActivity {
     private static final String DB_NAME = "RoomDB";
-    private int TESTS_COUNT = 100;
-
-    private CompositeDisposable bag = new CompositeDisposable();
 
     private UsersAdapter adapter;
+    private MainPresenter presenter;
 
     private ProgressBar progressBar;
     private EditText etUserName;
-    private RoomDB roomDB;
-    private Retrofit retrofit = new Retrofit.Builder().baseUrl("https://api.github.com/")
-            .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
-            .addConverterFactory(GsonConverterFactory.create())
-            .build();
-    private RestAPI api = retrofit.create(RestAPI.class);
-
-    private SingleObserver<Double> loadObserver = new SingleObserver<Double>() {
-        @Override
-        public void onSubscribe(Disposable d) {
-            bag.add(d);
-        }
-
-        @Override
-        public void onSuccess(Double aDouble) {
-            setResult(aDouble);
-            progressBar.setVisibility(View.GONE);
-            adapter.notifyDataSetChanged();
-        }
-
-        @Override
-        public void onError(Throwable e) {
-            e.printStackTrace();
-        }
-    };
-    private SingleObserver<Double> saveObserver = new SingleObserver<Double>() {
-        @Override
-        public void onSubscribe(Disposable d) {
-            bag.add(d);
-        }
-
-        @Override
-        public void onSuccess(Double aDouble) {
-            setResult(aDouble);
-            progressBar.setVisibility(View.GONE);
-        }
-
-        @Override
-        public void onError(Throwable e) {
-            e.printStackTrace();
-        }
-    };
-
+    private Double timeResult = 0d;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -104,11 +53,39 @@ public class MainActivity extends AppCompatActivity {
 
         Realm.init(getApplicationContext());
 
-        roomDB = Room.databaseBuilder(getApplicationContext(), RoomDB.class, DB_NAME).build();
-
-        initViews();
+        initPresenter();
 
         initRecycler();
+        initViews();
+    }
+
+    @Override
+    protected void onResume() {
+        presenter.bindView(this);
+        super.onResume();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        presenter.unbindView();
+    }
+
+
+
+    private void initPresenter() {
+        presenter = new MainPresenter();
+        DataWorker model = new DataWorker();
+
+        Retrofit retrofit = new Retrofit.Builder().baseUrl("https://api.github.com/")
+                .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+
+        RoomDB roomDB = Room.databaseBuilder(getApplicationContext(), RoomDB.class, DB_NAME).build();
+        model.setRoomDB(roomDB);
+        model.setApi(retrofit.create(RestAPI.class));
+        presenter.setModel(model);
     }
 
     private void initRecycler() {
@@ -123,25 +100,19 @@ public class MainActivity extends AppCompatActivity {
         progressBar = findViewById(R.id.progressBar);
 
         Button btnLoad = findViewById(R.id.btnLoad);
-        btnLoad.setOnClickListener((v) -> onClick());
+        btnLoad.setOnClickListener(v -> onClick());
 
         Button bntSaveRoom = findViewById(R.id.btn_save_room);
-        bntSaveRoom.setOnClickListener(v -> saveAllRoom());
+        bntSaveRoom.setOnClickListener(v -> presenter.onRoomSaveClicked(adapter.getData()));
 
         Button btnSaveRealm = findViewById(R.id.btn_save_realm);
-        btnSaveRealm.setOnClickListener(v -> saveAllRealm());
+        btnSaveRealm.setOnClickListener(v -> presenter.onRealmSaveClicked(adapter.getData()));
 
         Button btnLoadRoom = findViewById(R.id.btn_load_room);
-        btnLoadRoom.setOnClickListener(v -> loadFromRoom());
+        btnLoadRoom.setOnClickListener(v -> presenter.onRoomLoadClicked());
 
         Button btnLoadRealm = findViewById(R.id.btn_load_realm);
-        btnLoadRealm.setOnClickListener(v -> loadFromRealm());
-    }
-
-    @Override
-    protected void onDestroy() {
-        bag.clear();
-        super.onDestroy();
+        btnLoadRealm.setOnClickListener(v -> presenter.onRealmLoadClicked());
     }
 
     //TODO
@@ -165,176 +136,36 @@ public class MainActivity extends AppCompatActivity {
 
     public void onClick() {
         if (checkInternet()) return;
-        progressBar.setVisibility(View.VISIBLE);
-        download(etUserName.getText().toString());
+        String request = etUserName.getText().toString();
+        etUserName.setText("");
+        presenter.loadNetData(request);
     }
 
-    private void saveAllRoom() {
-        progressBar.setVisibility(View.VISIBLE);
-        Single<Double> saveRoomObs = Single.create((emitter) -> {
-            List<UserEntity> data = adapter.getData();
-            long sum = 0;
-
-            for (int i = 0; i < TESTS_COUNT; i++) {
-                roomDB.getUsersDao().deleteAll();
-                Date date1 = new Date();
-                roomDB.getUsersDao().saveAll(data);
-                Date date2 = new Date();
-                sum += date2.getTime() - date1.getTime();
-            }
-
-            double result = sum / (double) TESTS_COUNT;
-            emitter.onSuccess(result);
-        });
-
-        saveRoomObs.subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(saveObserver);
-    }
-
-    private void saveAllRealm() {
-        progressBar.setVisibility(View.VISIBLE);
-        Single<Double> single = Single.create(emitter -> {
-
-            Realm realm = Realm.getDefaultInstance();
-            List<UserEntity> data = adapter.getData();
-            long sum = 0;
-            for (int i = 0; i < TESTS_COUNT; i++) {
-                realm.beginTransaction();
-                realm.deleteAll();
-                Date date1 = new Date();
-                realm.insert(data);
-                realm.commitTransaction();
-                Date date2 = new Date();
-                sum += date2.getTime() - date1.getTime();
-            }
-            double result = sum / (double) TESTS_COUNT;
-            realm.close();
-            emitter.onSuccess(result);
-        });
-
-
-        single.subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(saveObserver);
-
-    }
-
-    private void loadFromRoom() {
-        progressBar.setVisibility(View.VISIBLE);
-        adapter.clearData();
-        Single<Double> single = Single.create(emitter -> {
-
-            List<UserEntity> data = new ArrayList<>();
-            long sum = 0;
-            for (int i = 0; i < TESTS_COUNT; i++) {
-                Date date1 = new Date();
-                data = roomDB.getUsersDao().getAllUsers();
-                Date date2 = new Date();
-                sum += date2.getTime() - date1.getTime();
-            }
-            adapter.setData(data);
-            double result = sum / (double) TESTS_COUNT;
-            emitter.onSuccess(result);
-        });
-
-        single.subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(loadObserver);
-    }
-
-    private void setResult(Double aDouble) {
+    public void updateResult() {
         TextView tvResult = findViewById(R.id.tv_test_time);
         TextView tvCount = findViewById(R.id.tv_test_items_count);
-        tvResult.setText(String.valueOf(aDouble));
+        tvResult.setText(String.valueOf(timeResult));
         tvCount.setText(String.valueOf(adapter.getData().size()));
     }
 
-    private void loadFromRealm() {
+    public void startProgress() {
         progressBar.setVisibility(View.VISIBLE);
-        adapter.clearData();
-
-        Single<Double> single = Single.create(emitter -> {
-            Realm realm = Realm.getDefaultInstance();
-            long sum = 0;
-            List<UserEntity> realmResults = new ArrayList<>();
-            for (int i = 0; i < TESTS_COUNT; i++) {
-                Date date1 = new Date();
-                realmResults = realm.where(UserEntity.class).findAll();
-                Date date2 = new Date();
-                sum += date2.getTime() - date1.getTime();
-            }
-            List<UserEntity> data = realm.copyFromRealm(realmResults);
-            double resultTime = sum / (double) TESTS_COUNT;
-            adapter.setData(data);
-            realm.close();
-            emitter.onSuccess(resultTime);
-        });
-
-        single
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(loadObserver);
     }
 
-    private void downloadAllUsers() {
-        api.getAllUsers()
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new SingleObserver<List<UserEntity>>() {
-                    @Override
-                    public void onSubscribe(Disposable d) {
-                        bag.add(d);
-                    }
-
-                    @Override
-                    public void onSuccess(List<UserEntity> userEntities) {
-                        adapter.setData(userEntities);
-                        adapter.notifyDataSetChanged();
-                        progressBar.setVisibility(View.GONE);
-                    }
-
-                    @Override
-                    public void onError(Throwable e) {
-                        e.printStackTrace();
-                    }
-                });
+    public void stopProgress() {
+        progressBar.setVisibility(View.GONE);
     }
 
-    private void downloadUser(String request) {
-        api.getUser(request)
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new SingleObserver<UserEntity>() {
-                    @Override
-                    public void onSubscribe(Disposable d) {
-                        bag.add(d);
-                    }
-
-                    @Override
-                    public void onSuccess(UserEntity userEntity) {
-                        List<UserEntity> singleList = new ArrayList<>(1);
-                        singleList.add(userEntity);
-                        adapter.setData(singleList);
-                        adapter.notifyDataSetChanged();
-                        progressBar.setVisibility(View.GONE);
-                    }
-
-                    @Override
-                    public void onError(Throwable e) {
-
-                    }
-                });
+    public void setResult(Double result) {
+        this.timeResult = result;
     }
 
-    private void download(String request) {
-        if (request.isEmpty()) {
-            downloadAllUsers();
-            return;
-        }
-
-        downloadUser(request);
+    public void updateRecyclerView() {
+        adapter.notifyDataSetChanged();
     }
 
+    public void updateRecyclerData(List<UserEntity> data) {
+        adapter.setData(data);
+    }
 
 }

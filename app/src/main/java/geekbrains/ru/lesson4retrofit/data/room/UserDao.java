@@ -6,7 +6,7 @@ import androidx.room.Query;
 
 import java.util.List;
 
-import geekbrains.ru.lesson4retrofit.data.UserEntity;
+import geekbrains.ru.lesson4retrofit.data.entities.UserEntity;
 
 @Dao
 public interface UserDao {

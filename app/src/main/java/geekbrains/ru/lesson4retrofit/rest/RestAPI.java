@@ -2,8 +2,8 @@ package geekbrains.ru.lesson4retrofit.rest;
 
 import java.util.List;
 
-import geekbrains.ru.lesson4retrofit.data.RepoEntity;
-import geekbrains.ru.lesson4retrofit.data.UserEntity;
+import geekbrains.ru.lesson4retrofit.data.entities.RepoEntity;
+import geekbrains.ru.lesson4retrofit.data.entities.UserEntity;
 import io.reactivex.Single;
 import retrofit2.http.GET;
 import retrofit2.http.Path;

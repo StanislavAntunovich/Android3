@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import geekbrains.ru.lesson4retrofit.R;
-import geekbrains.ru.lesson4retrofit.data.UserEntity;
+import geekbrains.ru.lesson4retrofit.data.entities.UserEntity;
 
 public class UsersAdapter extends RecyclerView.Adapter<UsersAdapter.UsersViewHolder> {
     private List<UserEntity> data;
@@ -58,10 +58,5 @@ public class UsersAdapter extends RecyclerView.Adapter<UsersAdapter.UsersViewHol
 
     public List<UserEntity> getData() {
         return data;
-    }
-
-    public void clearData() {
-        data = new ArrayList<>();
-        notifyDataSetChanged();
     }
 }
