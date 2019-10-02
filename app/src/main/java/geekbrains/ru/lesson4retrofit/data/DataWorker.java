@@ -17,7 +17,13 @@ public class DataWorker {
     private static final int TEST_COUNT = 100;
     private RoomDB roomDB;
     private RestAPI api;
+
     private PublishSubject<Double> resultsSubject = PublishSubject.create();
+
+    public DataWorker(RoomDB roomDB, RestAPI api) {
+        this.roomDB = roomDB;
+        this.api = api;
+    }
 
     public Single<UserEntity> loadUser(String name) {
         return api.getUser(name);
@@ -130,11 +136,4 @@ public class DataWorker {
         return resultsSubject;
     }
 
-    public void setRoomDB(RoomDB roomDB) {
-        this.roomDB = roomDB;
-    }
-
-    public void setApi(RestAPI api) {
-        this.api = api;
-    }
 }

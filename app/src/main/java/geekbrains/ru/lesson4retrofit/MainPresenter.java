@@ -3,6 +3,8 @@ package geekbrains.ru.lesson4retrofit;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.inject.Inject;
+
 import geekbrains.ru.lesson4retrofit.data.DataWorker;
 import geekbrains.ru.lesson4retrofit.data.entities.UserEntity;
 import io.reactivex.android.schedulers.AndroidSchedulers;
@@ -13,7 +15,8 @@ import io.reactivex.schedulers.Schedulers;
 
 public class MainPresenter {
     private MainActivity view;
-    private DataWorker model;
+    @Inject
+    DataWorker model;
     private CompositeDisposable bag = new CompositeDisposable();
 
     private DisposableSingleObserver<List<UserEntity>> getDataObserver() {
