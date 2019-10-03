@@ -8,6 +8,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -63,8 +64,6 @@ public class MainActivity extends AppCompatActivity {
         presenter.unbindView();
     }
 
-
-
     private void initPresenter() {
         component = DaggerDataComponent.builder()
                 .activityModule(new ActivityModule(this))
@@ -108,12 +107,16 @@ public class MainActivity extends AppCompatActivity {
         startActivity(intent);
     }
 
-    private boolean checkInternet() {
-        return component.isConnected();
+    private boolean isNetworkConnected() {
+        if (!component.isConnected()) {
+            Toast.makeText(this, R.string.check_internet, Toast.LENGTH_SHORT).show();
+            return false;
+        }
+        return true;
     }
 
     public void onClick() {
-        if (checkInternet()) return;
+        if (!isNetworkConnected()) return;
         String request = etUserName.getText().toString();
         etUserName.setText("");
         presenter.loadNetData(request);

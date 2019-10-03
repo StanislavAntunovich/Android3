@@ -29,18 +29,9 @@ public class ActivityModule {
     }
 
     @Provides
-    public ConnectivityManager getConnectManager(MainActivity activity) {
-        return (ConnectivityManager) activity.getSystemService(Context.CONNECTIVITY_SERVICE);
-    }
-
-    @Provides
-    public NetworkInfo getNetInfo(ConnectivityManager manager) {
-        return manager != null ? manager.getActiveNetworkInfo() :
-                null;
-    }
-
-    @Provides
-    public boolean isConnected(NetworkInfo networkInfo) {
-        return !(networkInfo != null && networkInfo.isConnected());
+    public boolean isConnected() {
+        ConnectivityManager manager = (ConnectivityManager) activity.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo = manager != null ? manager.getActiveNetworkInfo() : null;
+        return (networkInfo != null && networkInfo.isConnected());
     }
 }
