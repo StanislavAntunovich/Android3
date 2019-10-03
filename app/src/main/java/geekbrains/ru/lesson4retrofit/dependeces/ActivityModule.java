@@ -1,8 +1,6 @@
 package geekbrains.ru.lesson4retrofit.dependeces;
 
 import android.content.Context;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 
 import dagger.Module;
 import dagger.Provides;
@@ -28,10 +26,4 @@ public class ActivityModule {
         return this.activity;
     }
 
-    @Provides
-    public boolean isConnected() {
-        ConnectivityManager manager = (ConnectivityManager) activity.getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo networkInfo = manager != null ? manager.getActiveNetworkInfo() : null;
-        return (networkInfo != null && networkInfo.isConnected());
-    }
 }
