@@ -5,7 +5,7 @@ import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import geekbrains.ru.lesson4retrofit.rest.RetrofitRepoModel;
+import geekbrains.ru.lesson4retrofit.data.entities.RepoEntity;
 
 public class RepoActivity extends AppCompatActivity {
     public static final String REPO_MODEL_KEY = "repo_model_key";
@@ -15,7 +15,7 @@ public class RepoActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_repo);
 
-        RetrofitRepoModel model = (RetrofitRepoModel) getIntent()
+        RepoEntity model = (RepoEntity) getIntent()
                 .getSerializableExtra(REPO_MODEL_KEY);
 
         if (model != null) {

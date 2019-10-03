@@ -16,36 +16,32 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.room.Room;
 
 import com.jakewharton.retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
 
 import java.util.List;
 
-import geekbrains.ru.lesson4retrofit.rest.RestApi;
-import geekbrains.ru.lesson4retrofit.rest.RetrofitRepoModel;
-import io.reactivex.SingleObserver;
-import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.disposables.CompositeDisposable;
-import io.reactivex.disposables.Disposable;
-import io.reactivex.schedulers.Schedulers;
+import geekbrains.ru.lesson4retrofit.adapters.UsersAdapter;
+import geekbrains.ru.lesson4retrofit.data.DataWorker;
+import geekbrains.ru.lesson4retrofit.data.entities.RepoEntity;
+import geekbrains.ru.lesson4retrofit.data.entities.UserEntity;
+import geekbrains.ru.lesson4retrofit.data.room.RoomDB;
+import geekbrains.ru.lesson4retrofit.rest.RestAPI;
+import io.realm.Realm;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
 
 public class MainActivity extends AppCompatActivity {
-    private CompositeDisposable bag = new CompositeDisposable();
+    private static final String DB_NAME = "RoomDB";
 
-    private ReposAdapter adapter;
+    private UsersAdapter adapter;
+    private MainPresenter presenter;
 
-    private TextView mInfoTextView;
     private ProgressBar progressBar;
     private EditText etUserName;
-
-    private Retrofit retrofit = new Retrofit.Builder().baseUrl("https://api.github.com/")
-            .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
-            .addConverterFactory(GsonConverterFactory.create())
-            .build();
-    private RestApi api = retrofit.create(RestApi.class);
+    private Double timeResult = 0d;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,27 +51,72 @@ public class MainActivity extends AppCompatActivity {
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
 
+        Realm.init(getApplicationContext());
 
-        etUserName = findViewById(R.id.editText);
-        mInfoTextView = findViewById(R.id.tvLoad);
-        progressBar = findViewById(R.id.progressBar);
+        initPresenter();
 
-        Button btnLoad = findViewById(R.id.btnLoad);
-        btnLoad.setOnClickListener((v) -> onClick());
+        initRecycler();
+        initViews();
+    }
 
-        adapter = new ReposAdapter(this::startRepoActivity);
+    @Override
+    protected void onResume() {
+        presenter.bindView(this);
+        super.onResume();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        presenter.unbindView();
+    }
+
+
+
+    private void initPresenter() {
+        presenter = new MainPresenter();
+        DataWorker model = new DataWorker();
+
+        Retrofit retrofit = new Retrofit.Builder().baseUrl("https://api.github.com/")
+                .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+
+        RoomDB roomDB = Room.databaseBuilder(getApplicationContext(), RoomDB.class, DB_NAME).build();
+        model.setRoomDB(roomDB);
+        model.setApi(retrofit.create(RestAPI.class));
+        presenter.setModel(model);
+    }
+
+    private void initRecycler() {
+        adapter = new UsersAdapter();
         RecyclerView recyclerView = findViewById(R.id.rv_repos);
         recyclerView.setAdapter(adapter);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
     }
 
-    @Override
-    protected void onDestroy() {
-        bag.clear();
-        super.onDestroy();
+    private void initViews() {
+        etUserName = findViewById(R.id.editText);
+        progressBar = findViewById(R.id.progressBar);
+
+        Button btnLoad = findViewById(R.id.btnLoad);
+        btnLoad.setOnClickListener(v -> onClick());
+
+        Button bntSaveRoom = findViewById(R.id.btn_save_room);
+        bntSaveRoom.setOnClickListener(v -> presenter.onRoomSaveClicked(adapter.getData()));
+
+        Button btnSaveRealm = findViewById(R.id.btn_save_realm);
+        btnSaveRealm.setOnClickListener(v -> presenter.onRealmSaveClicked(adapter.getData()));
+
+        Button btnLoadRoom = findViewById(R.id.btn_load_room);
+        btnLoadRoom.setOnClickListener(v -> presenter.onRoomLoadClicked());
+
+        Button btnLoadRealm = findViewById(R.id.btn_load_realm);
+        btnLoadRealm.setOnClickListener(v -> presenter.onRealmLoadClicked());
     }
 
-    private void startRepoActivity(RetrofitRepoModel model) {
+    //TODO
+    private void startUserReposActivity(RepoEntity model) {
         Intent intent = new Intent(this, RepoActivity.class);
         intent.putExtra(RepoActivity.REPO_MODEL_KEY, model);
         startActivity(intent);
@@ -95,44 +136,36 @@ public class MainActivity extends AppCompatActivity {
 
     public void onClick() {
         if (checkInternet()) return;
+        String request = etUserName.getText().toString();
+        etUserName.setText("");
+        presenter.loadNetData(request);
+    }
+
+    public void updateResult() {
+        TextView tvResult = findViewById(R.id.tv_test_time);
+        TextView tvCount = findViewById(R.id.tv_test_items_count);
+        tvResult.setText(String.valueOf(timeResult));
+        tvCount.setText(String.valueOf(adapter.getData().size()));
+    }
+
+    public void startProgress() {
         progressBar.setVisibility(View.VISIBLE);
-        downloadOneUrl(etUserName.getText().toString());
     }
 
-    private void downloadOneUrl(String request) {
-        if (request.isEmpty()) {
-            Toast.makeText(this, R.string.fill_user_name, Toast.LENGTH_SHORT).show();
-            progressBar.setVisibility(View.GONE);
-            return;
-        }
-
-        api.getUserRepos(request)
-                .subscribeOn(Schedulers.io())
-                .retry(2)
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new SingleObserver<List<RetrofitRepoModel>>() {
-            @Override
-            public void onSubscribe(Disposable d) {
-                bag.add(d);
-            }
-
-            @Override
-            public void onSuccess(List<RetrofitRepoModel> data) {
-                mInfoTextView.setText(request);
-                adapter.setData(data);
-                adapter.notifyDataSetChanged();
-                progressBar.setVisibility(View.GONE);
-            }
-
-
-            @Override
-            public void onError(Throwable error) {
-                error.printStackTrace();
-                mInfoTextView.setText(R.string.error);
-                progressBar.setVisibility(View.GONE);
-            }
-        });
+    public void stopProgress() {
+        progressBar.setVisibility(View.GONE);
     }
 
+    public void setResult(Double result) {
+        this.timeResult = result;
+    }
+
+    public void updateRecyclerView() {
+        adapter.notifyDataSetChanged();
+    }
+
+    public void updateRecyclerData(List<UserEntity> data) {
+        adapter.setData(data);
+    }
 
 }
