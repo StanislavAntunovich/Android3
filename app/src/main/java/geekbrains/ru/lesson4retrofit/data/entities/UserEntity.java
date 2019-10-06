@@ -23,6 +23,16 @@ public class UserEntity extends RealmObject implements Serializable {
     private String avatarUrl;
     private String url;
 
+    public UserEntity() {
+    }
+
+    public UserEntity(@NonNull Integer id, String login, String avatarUrl, String url) {
+        this.id = id;
+        this.login = login;
+        this.avatarUrl = avatarUrl;
+        this.url = url;
+    }
+
     public String getLogin() {
         return login;
     }

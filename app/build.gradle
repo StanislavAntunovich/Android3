@@ -22,6 +22,10 @@ android {
         sourceCompatibility = 1.8
         targetCompatibility = 1.8
     }
+
+//    testOptions {
+//        unitTests.returnDefaultValues = true
+//    }
 }
 
 dependencies {
@@ -37,11 +41,19 @@ dependencies {
     implementation 'io.reactivex.rxjava2:rxandroid:2.1.1'
     implementation 'io.reactivex.rxjava2:rxjava:2.2.12'
 
+    implementation 'com.google.dagger:dagger:2.10'
+    annotationProcessor 'com.google.dagger:dagger-compiler:2.10'
 
     implementation "android.arch.persistence.room:runtime:1.1.1"
     annotationProcessor "android.arch.persistence.room:compiler:1.1.1"
 
     testImplementation 'junit:junit:4.12'
+    testImplementation 'org.mockito:mockito-core:3.1.0'
+    testAnnotationProcessor 'com.google.dagger:dagger-compiler:2.10'
+
+//    androidTestImplementation 'com.google.dagger:dagger:2.10'
+    androidTestAnnotationProcessor 'com.google.dagger:dagger-compiler:2.10'
+    androidTestImplementation 'com.squareup.okhttp3:mockwebserver:3.6.0'
     androidTestImplementation 'androidx.test:runner:1.2.0'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
 }

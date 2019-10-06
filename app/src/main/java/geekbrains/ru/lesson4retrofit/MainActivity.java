@@ -1,9 +1,6 @@
 package geekbrains.ru.lesson4retrofit;
 
-import android.content.Context;
 import android.content.Intent;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.os.StrictMode;
 import android.view.View;
@@ -16,25 +13,20 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import androidx.room.Room;
-
-import com.jakewharton.retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
 
 import java.util.List;
 
 import geekbrains.ru.lesson4retrofit.adapters.UsersAdapter;
-import geekbrains.ru.lesson4retrofit.data.DataWorker;
 import geekbrains.ru.lesson4retrofit.data.entities.RepoEntity;
 import geekbrains.ru.lesson4retrofit.data.entities.UserEntity;
-import geekbrains.ru.lesson4retrofit.data.room.RoomDB;
-import geekbrains.ru.lesson4retrofit.rest.RestAPI;
+import geekbrains.ru.lesson4retrofit.di.DaggerDataComponent;
+import geekbrains.ru.lesson4retrofit.di.DataComponent;
+import geekbrains.ru.lesson4retrofit.di.modules.ActivityModule;
+import geekbrains.ru.lesson4retrofit.di.modules.ApplicationContextModule;
 import io.realm.Realm;
-import retrofit2.Retrofit;
-import retrofit2.converter.gson.GsonConverterFactory;
 
 
 public class MainActivity extends AppCompatActivity {
-    private static final String DB_NAME = "RoomDB";
 
     private UsersAdapter adapter;
     private MainPresenter presenter;
@@ -42,6 +34,7 @@ public class MainActivity extends AppCompatActivity {
     private ProgressBar progressBar;
     private EditText etUserName;
     private Double timeResult = 0d;
+    private DataComponent component;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,21 +64,13 @@ public class MainActivity extends AppCompatActivity {
         presenter.unbindView();
     }
 
-
-
     private void initPresenter() {
-        presenter = new MainPresenter();
-        DataWorker model = new DataWorker();
-
-        Retrofit retrofit = new Retrofit.Builder().baseUrl("https://api.github.com/")
-                .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
-                .addConverterFactory(GsonConverterFactory.create())
+        component = DaggerDataComponent.builder()
+                .activityModule(new ActivityModule(this))
+                .applicationContextModule(new ApplicationContextModule(this))
                 .build();
-
-        RoomDB roomDB = Room.databaseBuilder(getApplicationContext(), RoomDB.class, DB_NAME).build();
-        model.setRoomDB(roomDB);
-        model.setApi(retrofit.create(RestAPI.class));
-        presenter.setModel(model);
+        presenter = new MainPresenter();
+        component.injectToPresenter(presenter);
     }
 
     private void initRecycler() {
@@ -122,20 +107,16 @@ public class MainActivity extends AppCompatActivity {
         startActivity(intent);
     }
 
-    private boolean checkInternet() {
-        ConnectivityManager connectivityManager =
-                (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo networkinfo = connectivityManager != null
-                ? connectivityManager.getActiveNetworkInfo() : null;
-        if (networkinfo == null || !networkinfo.isConnected()) {
+    private boolean isNetworkConnected() {
+        if (!component.isConnected()) {
             Toast.makeText(this, R.string.check_internet, Toast.LENGTH_SHORT).show();
-            return true;
+            return false;
         }
-        return false;
+        return true;
     }
 
     public void onClick() {
-        if (checkInternet()) return;
+        if (!isNetworkConnected()) return;
         String request = etUserName.getText().toString();
         etUserName.setText("");
         presenter.loadNetData(request);
@@ -166,6 +147,10 @@ public class MainActivity extends AppCompatActivity {
 
     public void updateRecyclerData(List<UserEntity> data) {
         adapter.setData(data);
+    }
+
+    public void showError(String error) {
+        Toast.makeText(this, error, Toast.LENGTH_SHORT).show();
     }
 
 }

@@ -16,4 +16,5 @@
     <string name="items_count">Items count:</string>
     <string name="time">Time:</string>
     <string name="et_hint">enter user name of leave empty to load all</string>
+    <string name="user_not_found">user not found</string>
 </resources>
