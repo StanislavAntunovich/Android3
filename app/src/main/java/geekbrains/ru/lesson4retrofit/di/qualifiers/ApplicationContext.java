@@ -1,4 +1,4 @@
-package geekbrains.ru.lesson4retrofit.dependeces;
+package geekbrains.ru.lesson4retrofit.di.qualifiers;
 
 import javax.inject.Qualifier;
 

@@ -1,4 +1,4 @@
-package geekbrains.ru.lesson4retrofit.dependeces;
+package geekbrains.ru.lesson4retrofit.di.modules;
 
 import android.content.Context;
 import android.net.ConnectivityManager;
@@ -19,9 +19,14 @@ import retrofit2.converter.gson.GsonConverterFactory;
 public class NetworkModule {
 
     @Provides
+    public String baseUrl() {
+        return "https://api.github.com/";
+    }
+
+    @Provides
     @Singleton
-    public Retrofit getRetrofit() {
-        return new Retrofit.Builder().baseUrl("https://api.github.com/")
+    public Retrofit getRetrofit(String baseUrl) {
+        return new Retrofit.Builder().baseUrl(baseUrl)
                 .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();

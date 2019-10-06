@@ -19,10 +19,10 @@ import java.util.List;
 import geekbrains.ru.lesson4retrofit.adapters.UsersAdapter;
 import geekbrains.ru.lesson4retrofit.data.entities.RepoEntity;
 import geekbrains.ru.lesson4retrofit.data.entities.UserEntity;
-import geekbrains.ru.lesson4retrofit.dependeces.ActivityModule;
-import geekbrains.ru.lesson4retrofit.dependeces.ApplicationContextModule;
-import geekbrains.ru.lesson4retrofit.dependeces.DaggerDataComponent;
-import geekbrains.ru.lesson4retrofit.dependeces.DataComponent;
+import geekbrains.ru.lesson4retrofit.di.DaggerDataComponent;
+import geekbrains.ru.lesson4retrofit.di.DataComponent;
+import geekbrains.ru.lesson4retrofit.di.modules.ActivityModule;
+import geekbrains.ru.lesson4retrofit.di.modules.ApplicationContextModule;
 import io.realm.Realm;
 
 
@@ -147,6 +147,10 @@ public class MainActivity extends AppCompatActivity {
 
     public void updateRecyclerData(List<UserEntity> data) {
         adapter.setData(data);
+    }
+
+    public void showError(String error) {
+        Toast.makeText(this, error, Toast.LENGTH_SHORT).show();
     }
 
 }

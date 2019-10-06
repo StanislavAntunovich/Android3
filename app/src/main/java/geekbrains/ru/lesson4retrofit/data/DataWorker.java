@@ -7,7 +7,10 @@ import java.util.List;
 import geekbrains.ru.lesson4retrofit.data.entities.UserEntity;
 import geekbrains.ru.lesson4retrofit.data.room.RoomDB;
 import geekbrains.ru.lesson4retrofit.rest.RestAPI;
+import io.reactivex.Observable;
 import io.reactivex.Single;
+import io.reactivex.SingleEmitter;
+import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.observers.DisposableSingleObserver;
 import io.reactivex.schedulers.Schedulers;
 import io.reactivex.subjects.PublishSubject;
@@ -26,11 +29,15 @@ public class DataWorker {
     }
 
     public Single<UserEntity> loadUser(String name) {
-        return api.getUser(name);
+        return api.getUser(name)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread());
     }
 
     public Single<List<UserEntity>> getAllUsers() {
-        return api.getAllUsers();
+        return api.getAllUsers()
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread());
     }
 
     public void testRoomSaveData(List<UserEntity> data) {
@@ -63,7 +70,7 @@ public class DataWorker {
 
     public Single<List<UserEntity>> testRoomLoadData() {
 
-        return Single.create(emitter -> {
+        return Single.create((SingleEmitter<List<UserEntity>> emitter) -> {
 
             List<UserEntity> data = new ArrayList<>();
             long sum = 0;
@@ -77,7 +84,9 @@ public class DataWorker {
             double result = sum / (double) TEST_COUNT;
             emitter.onSuccess(data);
             resultsSubject.onNext(result);
-        });
+        })
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread());
     }
 
     public void testRealmSaveData(List<UserEntity> data) {
@@ -115,10 +124,10 @@ public class DataWorker {
     }
 
     public Single<List<UserEntity>> testRealmLoadData() {
-        return Single.create(emitter -> {
-            Realm db = Realm.getDefaultInstance();
+        return Single.create((SingleEmitter<List<UserEntity>> emitter) -> {
             List<UserEntity> realmResults = new ArrayList<>();
             long sum = 0;
+            Realm db = Realm.getDefaultInstance();
             for (int i = 0; i < TEST_COUNT; i++) {
                 Date date1 = new Date();
                 realmResults = db.where(UserEntity.class).findAll();
@@ -129,11 +138,12 @@ public class DataWorker {
             double result = sum / (double) TEST_COUNT;
             emitter.onSuccess(data);
             resultsSubject.onNext(result);
-        });
+        }).subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread());
     }
 
-    public PublishSubject<Double> subscribeOnResults() {
-        return resultsSubject;
+    public Observable<Double> subscribeOnResults() {
+        return resultsSubject.observeOn(AndroidSchedulers.mainThread());
     }
 
 }

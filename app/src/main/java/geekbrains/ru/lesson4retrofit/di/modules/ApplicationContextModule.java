@@ -1,9 +1,10 @@
-package geekbrains.ru.lesson4retrofit.dependeces;
+package geekbrains.ru.lesson4retrofit.di.modules;
 
 import android.content.Context;
 
 import dagger.Module;
 import dagger.Provides;
+import geekbrains.ru.lesson4retrofit.di.qualifiers.ApplicationContext;
 
 @Module
 public class ApplicationContextModule {

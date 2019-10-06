@@ -1,4 +1,4 @@
-package geekbrains.ru.lesson4retrofit.dependeces;
+package geekbrains.ru.lesson4retrofit.di.modules;
 
 import android.content.Context;
 
