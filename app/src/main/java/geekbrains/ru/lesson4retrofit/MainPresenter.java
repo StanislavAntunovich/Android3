@@ -17,7 +17,7 @@ public class MainPresenter {
     DataWorker model;
     private CompositeDisposable bag = new CompositeDisposable();
 
-    private DisposableSingleObserver<List<UserEntity>> getDataObserver() {
+    public DisposableSingleObserver<List<UserEntity>> getDataObserver() {
         return new DisposableSingleObserver<List<UserEntity>>() {
             @Override
             public void onSuccess(List<UserEntity> data) {
@@ -93,7 +93,7 @@ public class MainPresenter {
                 .subscribe(getDataObserver());
     }
 
-    private void onFailure(String error) {
+    public void onFailure(String error) {
         view.stopProgress();
         view.showError(error);
     }
