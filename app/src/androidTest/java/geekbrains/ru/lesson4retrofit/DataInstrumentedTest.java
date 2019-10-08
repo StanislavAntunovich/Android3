@@ -137,7 +137,9 @@ public class DataInstrumentedTest {
     }
 
     @Test
-    public void roomLoadDataTest() {
+    public void roomLoadDataTest() throws InterruptedException {
+        model.testRoomSaveData(USERS_LIST);
+        Thread.sleep(100);
         TestObserver<List<UserEntity>> entityObserver = TestObserver.create();
         TestObserver<Double> timeObserver = TestObserver.create();
         final List<Double> resultsList = new ArrayList<>();
