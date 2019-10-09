@@ -65,7 +65,4 @@ public class ReposAdapter extends RecyclerView.Adapter<ReposAdapter.ReposViewHol
         }
     }
 
-    public interface OnItemClickListener {
-        void onItemClick(RepoEntity model);
-    }
 }

@@ -16,11 +16,12 @@ import java.util.List;
 
 import javax.inject.Inject;
 
-import geekbrains.ru.lesson4retrofit.data.DataWorker;
+import geekbrains.ru.lesson4retrofit.data.MainDataHelper;
 import geekbrains.ru.lesson4retrofit.data.entities.UserEntity;
 import geekbrains.ru.lesson4retrofit.di.DaggerTestComponent;
 import geekbrains.ru.lesson4retrofit.di.TestComponent;
 import geekbrains.ru.lesson4retrofit.di.TestModule;
+import geekbrains.ru.lesson4retrofit.presenters.MainPresenter;
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import okhttp3.MediaType;
@@ -33,7 +34,7 @@ public class MainPresenterTest {
     private static UserEntity USER;
 
     @Inject
-    DataWorker model;
+    MainDataHelper model;
 
     private MainPresenter presenter;
 
@@ -62,8 +63,8 @@ public class MainPresenterTest {
         TestComponent component = DaggerTestComponent.builder()
                 .testModule(new TestModule() {
                     @Override
-                    public DataWorker getModel() {
-                        DataWorker model = super.getModel();
+                    public MainDataHelper getModel() {
+                        MainDataHelper model = super.getModel();
                         Mockito.when(model.subscribeOnResults())
                                 .thenReturn(Observable.just(SPEED_RESULT));
                         Mockito.when(model.testRealmLoadData())

@@ -8,8 +8,6 @@ public class RepoEntity implements Serializable {
 
     private Long id;
     private String name;
-    @SerializedName("full_name")
-    private String fullName;
     @SerializedName("private")
     private Boolean isPrivate;
     private String language;
@@ -22,11 +20,16 @@ public class RepoEntity implements Serializable {
     private String updatedAt;
     @SerializedName("pushed_at")
     private String pushedAt;
-    private UserEntity owner;
 
-    public UserEntity getOwner() {
-        return owner;
+    public RepoEntity(Long id, String name, Boolean isPrivate, String language, String url) {
+        this.id = id;
+        this.name = name;
+        this.isPrivate = isPrivate;
+        this.language = language;
+        this.url = url;
     }
+
+    public RepoEntity() {}
 
     public String getLanguage() {
         return language;
@@ -34,10 +37,6 @@ public class RepoEntity implements Serializable {
 
     public void setLanguage(String language) {
         this.language = language;
-    }
-
-    public void setOwner(UserEntity owner) {
-        this.owner = owner;
     }
 
     public Long getId() {
@@ -56,13 +55,6 @@ public class RepoEntity implements Serializable {
         this.name = name;
     }
 
-    public String getFullName() {
-        return fullName;
-    }
-
-    public void setFullName(String fullName) {
-        this.fullName = fullName;
-    }
 
     public Boolean isPrivate() {
         return isPrivate;

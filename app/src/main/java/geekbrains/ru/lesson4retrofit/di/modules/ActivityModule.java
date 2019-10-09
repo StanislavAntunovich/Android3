@@ -1,5 +1,6 @@
 package geekbrains.ru.lesson4retrofit.di.modules;
 
+import android.app.Activity;
 import android.content.Context;
 
 import dagger.Module;
@@ -9,9 +10,9 @@ import geekbrains.ru.lesson4retrofit.MainActivity;
 @Module
 public class ActivityModule {
     private Context context;
-    private MainActivity activity;
+    private Activity activity;
 
-    public ActivityModule(MainActivity activity) {
+    public ActivityModule(Activity activity) {
         this.context = activity;
         this.activity = activity;
     }
@@ -22,8 +23,8 @@ public class ActivityModule {
     }
 
     @Provides
-    public MainActivity getActivity() {
-        return this.activity;
+    public MainActivity getMainActivity() {
+        return (MainActivity) this.activity;
     }
 
 }
