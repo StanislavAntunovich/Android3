@@ -25,6 +25,10 @@ public class UsersPresenter {
     }
 
     public void getRepos(String name) {
+        if (!view.isNetworkConnected()) {
+            view.showError("check internet connection");
+            return;
+        }
         view.startLoading();
         helper.getRepos(name).subscribe(new DisposableSingleObserver<List<RepoEntity>>() {
             @Override

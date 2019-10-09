@@ -113,16 +113,11 @@ public class MainActivity extends AppCompatActivity {
         startActivity(intent);
     }
 
-    private boolean isNetworkConnected() {
-        if (!component.isConnected()) {
-            Toast.makeText(this, R.string.check_internet, Toast.LENGTH_SHORT).show();
-            return false;
-        }
-        return true;
+    public boolean isNetworkConnected() {
+        return component.isConnected();
     }
 
     public void onClick() {
-        if (!isNetworkConnected()) return;
         String request = etUserName.getText().toString();
         etUserName.setText("");
         presenter.loadNetData(request);

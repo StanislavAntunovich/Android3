@@ -41,6 +41,10 @@ public class MainPresenter {
     }
 
     public void loadNetData(String request) {
+        if (!view.isNetworkConnected()) {
+            view.showError("check internet connection");
+            return;
+        }
         view.startProgress();
         if (request.isEmpty()) {
             loadAllUsers();
@@ -101,6 +105,9 @@ public class MainPresenter {
     }
 
     public void onItemClicked(Serializable model) {
+        if (!view.isNetworkConnected()) {
+            view.showError("check internet connection");
+        }
         if (model instanceof UserEntity) {
             String name = ((UserEntity) model).getLogin();
             view.startUserReposActivity(name);

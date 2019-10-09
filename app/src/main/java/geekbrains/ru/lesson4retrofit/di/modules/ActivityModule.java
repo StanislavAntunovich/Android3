@@ -27,4 +27,9 @@ public class ActivityModule {
         return (MainActivity) this.activity;
     }
 
+    @Provides
+    public Activity getActivity() {
+        return this.activity;
+    }
+
 }
