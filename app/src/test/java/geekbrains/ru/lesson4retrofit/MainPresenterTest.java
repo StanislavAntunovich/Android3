@@ -14,15 +14,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import javax.inject.Inject;
-
-import geekbrains.ru.lesson4retrofit.data.MainDataHelper;
+import geekbrains.ru.lesson4retrofit.data.DataHelper;
 import geekbrains.ru.lesson4retrofit.data.entities.UserEntity;
-import geekbrains.ru.lesson4retrofit.di.DaggerTestComponent;
-import geekbrains.ru.lesson4retrofit.di.TestComponent;
-import geekbrains.ru.lesson4retrofit.di.TestModule;
 import geekbrains.ru.lesson4retrofit.presenters.MainPresenter;
-import io.reactivex.Observable;
 import io.reactivex.Single;
 import okhttp3.MediaType;
 import okhttp3.ResponseBody;
@@ -33,8 +27,7 @@ public class MainPresenterTest {
     private static final double SPEED_RESULT = 2.5;
     private static UserEntity USER;
 
-    @Inject
-    MainDataHelper model;
+    DataHelper model;
 
     private MainPresenter presenter;
 
@@ -60,30 +53,7 @@ public class MainPresenterTest {
         MockitoAnnotations.initMocks(this);
 
         presenter = new MainPresenter();
-        TestComponent component = DaggerTestComponent.builder()
-                .testModule(new TestModule() {
-                    @Override
-                    public MainDataHelper getModel() {
-                        MainDataHelper model = super.getModel();
-                        Mockito.when(model.subscribeOnResults())
-                                .thenReturn(Observable.just(SPEED_RESULT));
-                        Mockito.when(model.testRealmLoadData())
-                                .thenReturn(Single.just(USERS_LIST));
-                        Mockito.when(model.testRoomLoadData())
-                                .thenReturn(Single.just(USERS_LIST));
 
-                        Mockito.when(model.getAllUsers())
-                                .thenReturn(Single.just(USERS_LIST));
-
-                        Mockito.when(model.loadUser(USER.getLogin()))
-                                .thenReturn(Single.just(USER));
-                        return model;
-                    }
-                })
-                .build();
-
-        component.inject(presenter);
-        component.inject(this);
 
         presenter.bindView(view);
 

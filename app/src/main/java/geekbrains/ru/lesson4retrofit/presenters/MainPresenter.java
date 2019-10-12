@@ -1,141 +1,130 @@
 package geekbrains.ru.lesson4retrofit.presenters;
 
-import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.List;
 
 import javax.inject.Inject;
 
-import geekbrains.ru.lesson4retrofit.MainActivity;
-import geekbrains.ru.lesson4retrofit.data.MainDataHelper;
+import geekbrains.ru.lesson4retrofit.data.DataHelper;
+import geekbrains.ru.lesson4retrofit.data.NetworkHelper;
 import geekbrains.ru.lesson4retrofit.data.entities.UserEntity;
+import geekbrains.ru.lesson4retrofit.di.AppComponent;
+import io.reactivex.Observer;
 import io.reactivex.disposables.CompositeDisposable;
-import io.reactivex.disposables.Disposable;
+import io.reactivex.observers.DisposableCompletableObserver;
+import io.reactivex.observers.DisposableObserver;
 import io.reactivex.observers.DisposableSingleObserver;
 
 public class MainPresenter {
-    private MainActivity view;
-    @Inject
-    public MainDataHelper model;
     private CompositeDisposable bag = new CompositeDisposable();
+    private Observer<Boolean> progress;
+    private Observer<List<UserEntity>> data;
 
-    public DisposableSingleObserver<List<UserEntity>> getDataObserver() {
-        return new DisposableSingleObserver<List<UserEntity>>() {
+    @Inject
+    NetworkHelper networkHelper;
+    @Inject
+    DataHelper dataHelper;
+
+
+    public MainPresenter(AppComponent component) {
+        component.inject(this);
+    }
+
+    public void bindView(
+            DisposableObserver<Boolean> progress,
+            DisposableObserver<String> result,
+            DisposableObserver<List<UserEntity>> data) {
+        this.progress = progress;
+        this.data = data;
+
+        bag.add(dataHelper.subscribeOnResults().subscribeWith(result));
+        initView();
+    }
+
+    private void initView() {
+        List<UserEntity> data = networkHelper.getCurrentUsers();
+        if (!data.isEmpty()) {
+            this.data.onNext(data);
+        }
+    }
+
+    public void unBindView() {
+        bag.clear();
+    }
+
+    public void loadNetData(String request) {
+        if (request.isEmpty()) {
+            bag.add(networkHelper.getAllUsers().subscribeWith(getObserver()));
+        } else {
+            bag.add(networkHelper.loadUser(request).subscribeWith(getObserver()));
+        }
+    }
+
+    public void saveAllRoom() {
+        dataHelper.testRoomSaveData(networkHelper.getCurrentUsers())
+                .subscribe(getCompletable());
+    }
+
+    public void saveAllRealm() {
+        dataHelper.testRealmSaveData(networkHelper.getCurrentUsers())
+                .subscribe(getCompletable());
+    }
+
+    public void loadAllRoom() {
+        bag.add(dataHelper
+                .testRoomLoadData()
+                .subscribeWith(getObserver()));
+
+    }
+
+    public void loadAllRealm() {
+        bag.add(dataHelper
+                .testRealmLoadData()
+                .subscribeWith(getObserver()));
+
+    }
+
+    private DisposableCompletableObserver getCompletable() {
+        return new DisposableCompletableObserver() {
             @Override
-            public void onSuccess(List<UserEntity> data) {
-                onProcessFinished(data);
+            protected void onStart() {
+                progress.onNext(true);
+                super.onStart();
+            }
+
+            @Override
+            public void onComplete() {
+                progress.onNext(false);
             }
 
             @Override
             public void onError(Throwable e) {
-                onFailure(e.getLocalizedMessage());
-                e.printStackTrace();
+                progress.onNext(false);
+                progress.onError(e);
             }
         };
     }
 
-    private void onProcessFinished(List<UserEntity> data) {
-        view.updateRecyclerData(data);
-        view.updateRecyclerView();
-        view.stopProgress();
-    }
+    private DisposableSingleObserver<List<UserEntity>> getObserver() {
+        return new DisposableSingleObserver<List<UserEntity>>() {
+            @Override
+            protected void onStart() {
+                super.onStart();
+                progress.onNext(true);
+            }
 
-    public void loadNetData(String request) {
-        if (!view.isNetworkConnected()) {
-            view.showError("check internet connection");
-            return;
-        }
-        view.startProgress();
-        if (request.isEmpty()) {
-            loadAllUsers();
-        } else {
-            loadSingleUser(request);
-        }
-    }
+            @Override
+            public void onSuccess(List<UserEntity> userEntities) {
+                networkHelper.setCurrentUsers(userEntities);
+                progress.onNext(false);
+                data.onNext(userEntities);
+            }
 
-    private void loadAllUsers() {
-        model.getAllUsers()
-                .subscribe(getDataObserver());
-    }
-
-    private void loadSingleUser(String name) {
-        model.loadUser(name)
-                .subscribe(new DisposableSingleObserver<UserEntity>() {
-                    @Override
-                    public void onSuccess(UserEntity userEntity) {
-                        List<UserEntity> singleList = new ArrayList<>(1);
-                        singleList.add(userEntity);
-                        onProcessFinished(singleList);
-                    }
-
-                    @Override
-                    public void onError(Throwable e) {
-                        onFailure(e.getLocalizedMessage());
-                        e.printStackTrace();
-                    }
-                });
-    }
-
-    public void onRoomSaveClicked(List<UserEntity> data) {
-        view.startProgress();
-        model.testRoomSaveData(data);
-    }
-
-    public void onRealmSaveClicked(List<UserEntity> data) {
-        view.startProgress();
-        model.testRealmSaveData(data);
-    }
-
-
-    public void onRoomLoadClicked() {
-        view.startProgress();
-        model.testRoomLoadData()
-                .subscribe(getDataObserver());
-    }
-
-    public void onRealmLoadClicked() {
-        view.startProgress();
-        model.testRealmLoadData()
-                .subscribe(getDataObserver());
-    }
-
-    public void onFailure(String error) {
-        view.stopProgress();
-        view.showError(error);
-    }
-
-    public void onItemClicked(Serializable model) {
-        if (!view.isNetworkConnected()) {
-            view.showError("check internet connection");
-        }
-        if (model instanceof UserEntity) {
-            String name = ((UserEntity) model).getLogin();
-            view.startUserReposActivity(name);
-        } else {
-            view.showError("Wrong item");
-        }
-    }
-
-    public void bindView(MainActivity view) {
-        this.view = view;
-        Disposable d = model.subscribeOnResults()
-                .subscribe(
-                        result -> {
-                            view.setResult(result);
-                            view.updateResult();
-                            view.stopProgress();
-                        },
-                        e -> {
-                            e.printStackTrace();
-                            onFailure(e.getLocalizedMessage());
-                        }
-                );
-        bag.add(d);
-    }
-
-    public void unbindView() {
-        this.view = null;
-        bag.clear();
+            @Override
+            public void onError(Throwable e) {
+                progress.onNext(false);
+                progress.onError(e);
+            }
+        };
     }
 
 }

@@ -13,14 +13,9 @@ import org.mockito.MockitoAnnotations;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.inject.Inject;
-
-import geekbrains.ru.lesson4retrofit.data.UsersDataHelper;
+import geekbrains.ru.lesson4retrofit.data.NetworkHelper;
 import geekbrains.ru.lesson4retrofit.data.entities.RepoEntity;
 import geekbrains.ru.lesson4retrofit.data.entities.UserEntity;
-import geekbrains.ru.lesson4retrofit.di.DaggerTestComponent;
-import geekbrains.ru.lesson4retrofit.di.TestComponent;
-import geekbrains.ru.lesson4retrofit.di.TestModule;
 import geekbrains.ru.lesson4retrofit.presenters.UsersPresenter;
 import io.reactivex.Single;
 import okhttp3.MediaType;
@@ -36,8 +31,7 @@ public class UserPresenterTest {
     @Mock
     private UserActivity view;
 
-    @Inject
-    UsersDataHelper helper;
+    NetworkHelper helper;
 
     private UsersPresenter presenter;
 
@@ -56,19 +50,7 @@ public class UserPresenterTest {
         MockitoAnnotations.initMocks(this);
 
         presenter = new UsersPresenter();
-        TestComponent component = DaggerTestComponent.builder()
-                .testModule(new TestModule() {
-                    @Override
-                    public UsersDataHelper getUserHelper() {
-                        UsersDataHelper helper = super.getUserHelper();
-                        Mockito.when(helper.getRepos(USER.getLogin()))
-                                .thenReturn(Single.just(REPOS));
-                        return helper;
-                    }
-                })
-                .build();
-        component.inject(presenter);
-        component.inject(this);
+
 
         presenter.bindView(view);
     }

@@ -1,55 +1,74 @@
 package geekbrains.ru.lesson4retrofit.presenters;
 
-import java.io.Serializable;
 import java.util.List;
 
 import javax.inject.Inject;
 
-import geekbrains.ru.lesson4retrofit.UserActivity;
-import geekbrains.ru.lesson4retrofit.data.UsersDataHelper;
+import geekbrains.ru.lesson4retrofit.data.NetworkHelper;
 import geekbrains.ru.lesson4retrofit.data.entities.RepoEntity;
+import geekbrains.ru.lesson4retrofit.di.AppComponent;
+import io.reactivex.Observer;
+import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.observers.DisposableObserver;
 import io.reactivex.observers.DisposableSingleObserver;
 
 public class UsersPresenter {
-    private UserActivity view;
+    private CompositeDisposable bag = new CompositeDisposable();
+    private Observer<Boolean> progress;
+    private Observer<List<RepoEntity>> data;
+    private String currentUser;
 
     @Inject
-    public UsersDataHelper helper;
+    NetworkHelper helper;
 
-    public void bindView(UserActivity view) {
-        this.view = view;
+    public UsersPresenter(AppComponent component) {
+        component.inject(this);
+    }
+
+    public void bindView(
+            DisposableObserver<Boolean> progress,
+            DisposableObserver<List<RepoEntity>> data,
+            String name) {
+        this.progress = progress;
+        this.data = data;
+
+        initView(name);
     }
 
     public void unbindView() {
-        this.view = null;
+        bag.clear();
     }
 
-    public void getRepos(String name) {
-        if (!view.isNetworkConnected()) {
-            view.showError("check internet connection");
+    private void initView(String name) {
+        if (currentUser != null && currentUser.equals(name)) {
+            data.onNext(helper.getCurrentRepos());
             return;
         }
-        view.startLoading();
-        helper.getRepos(name).subscribe(new DisposableSingleObserver<List<RepoEntity>>() {
+        this.currentUser = name;
+        getRepos(name);
+    }
+
+    private void getRepos(String name) {
+        Disposable d = helper.getRepos(name).subscribeWith(new DisposableSingleObserver<List<RepoEntity>>() {
+            @Override
+            protected void onStart() {
+                super.onStart();
+                progress.onNext(true);
+            }
+
             @Override
             public void onSuccess(List<RepoEntity> repoEntities) {
-                view.stopLoading();
-                view.updateData(repoEntities);
+                progress.onNext(false);
+                data.onNext(repoEntities);
+                helper.setCurrentRepos(repoEntities);
             }
 
             @Override
             public void onError(Throwable e) {
-                view.stopLoading();
-                view.showError(e.getLocalizedMessage());
+                progress.onError(e);
             }
         });
-    }
-
-    public void onRepoClick(Serializable repo) {
-        view.startRepoActivity(repo);
-    }
-
-    public void drop() {
-        helper = null;
+        bag.add(d);
     }
 }

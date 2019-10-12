@@ -6,21 +6,21 @@ import javax.inject.Singleton;
 
 import dagger.Module;
 import dagger.Provides;
-import geekbrains.ru.lesson4retrofit.data.MainDataHelper;
-import geekbrains.ru.lesson4retrofit.data.UsersDataHelper;
+import geekbrains.ru.lesson4retrofit.data.DataHelper;
+import geekbrains.ru.lesson4retrofit.data.NetworkHelper;
 
 @Module
 public class TestModule {
 
     @Provides
     @Singleton
-    public MainDataHelper getModel() {
-        return Mockito.mock(MainDataHelper.class);
+    public DataHelper getModel() {
+        return Mockito.mock(DataHelper.class);
     }
 
     @Provides
     @Singleton
-    public UsersDataHelper getUserHelper() {
-        return Mockito.mock(UsersDataHelper.class);
+    public NetworkHelper getUserHelper() {
+        return Mockito.mock(NetworkHelper.class);
     }
 }
