@@ -16,9 +16,11 @@ import geekbrains.ru.lesson4retrofit.data.entities.UserEntity;
 
 public class UsersAdapter extends RecyclerView.Adapter<UsersAdapter.UsersViewHolder> {
     private List<UserEntity> data;
+    private OnItemClickListener listener;
 
-    public UsersAdapter() {
-        data = new ArrayList<>();
+    public UsersAdapter(OnItemClickListener listener) {
+        this.listener = listener;
+        this.data = new ArrayList<>();
     }
 
     public void setData(List<UserEntity> data) {
@@ -53,10 +55,16 @@ public class UsersAdapter extends RecyclerView.Adapter<UsersAdapter.UsersViewHol
             super(itemView);
             tvUserId = itemView.findViewById(R.id.tv_user_id);
             tvUserName = itemView.findViewById(R.id.tv_user_name);
+            itemView.setOnClickListener(v -> {
+                UserEntity model = data.get(getAdapterPosition());
+                listener.onItemClick(model);
+            });
         }
     }
 
     public List<UserEntity> getData() {
         return data;
     }
+
+
 }

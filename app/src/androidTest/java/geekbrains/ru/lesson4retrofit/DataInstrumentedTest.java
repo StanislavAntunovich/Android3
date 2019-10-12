@@ -17,7 +17,7 @@ import java.util.List;
 
 import javax.inject.Inject;
 
-import geekbrains.ru.lesson4retrofit.data.DataWorker;
+import geekbrains.ru.lesson4retrofit.data.MainDataHelper;
 import geekbrains.ru.lesson4retrofit.data.entities.UserEntity;
 import geekbrains.ru.lesson4retrofit.di.DaggerTestInstrumentalComponent;
 import geekbrains.ru.lesson4retrofit.di.TestInstrumentalComponent;
@@ -37,7 +37,7 @@ public class DataInstrumentedTest {
 
 
     @Inject
-    DataWorker model;
+    MainDataHelper model;
 
     private static MockWebServer webServer;
 

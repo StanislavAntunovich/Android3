@@ -14,19 +14,23 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.facebook.stetho.Stetho;
+
 import java.util.List;
 
 import geekbrains.ru.lesson4retrofit.adapters.UsersAdapter;
-import geekbrains.ru.lesson4retrofit.data.entities.RepoEntity;
 import geekbrains.ru.lesson4retrofit.data.entities.UserEntity;
 import geekbrains.ru.lesson4retrofit.di.DaggerDataComponent;
 import geekbrains.ru.lesson4retrofit.di.DataComponent;
 import geekbrains.ru.lesson4retrofit.di.modules.ActivityModule;
 import geekbrains.ru.lesson4retrofit.di.modules.ApplicationContextModule;
+import geekbrains.ru.lesson4retrofit.presenters.MainPresenter;
 import io.realm.Realm;
 
 
 public class MainActivity extends AppCompatActivity {
+    public static final String USER_NAME_KEY = "user name";
+    public static final String REPO_MODEL_KEY = "repo_model_key";
 
     private UsersAdapter adapter;
     private MainPresenter presenter;
@@ -40,6 +44,8 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        Stetho.initializeWithDefaults(this);
 
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
@@ -74,8 +80,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initRecycler() {
-        adapter = new UsersAdapter();
-        RecyclerView recyclerView = findViewById(R.id.rv_repos);
+        adapter = new UsersAdapter(model -> presenter.onItemClicked(model));
+        RecyclerView recyclerView = findViewById(R.id.rv_users);
         recyclerView.setAdapter(adapter);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
     }
@@ -101,22 +107,17 @@ public class MainActivity extends AppCompatActivity {
     }
 
     //TODO
-    private void startUserReposActivity(RepoEntity model) {
-        Intent intent = new Intent(this, RepoActivity.class);
-        intent.putExtra(RepoActivity.REPO_MODEL_KEY, model);
+    public void startUserReposActivity(String userName) {
+        Intent intent = new Intent(this, UserActivity.class);
+        intent.putExtra(USER_NAME_KEY, userName);
         startActivity(intent);
     }
 
-    private boolean isNetworkConnected() {
-        if (!component.isConnected()) {
-            Toast.makeText(this, R.string.check_internet, Toast.LENGTH_SHORT).show();
-            return false;
-        }
-        return true;
+    public boolean isNetworkConnected() {
+        return component.isConnected();
     }
 
     public void onClick() {
-        if (!isNetworkConnected()) return;
         String request = etUserName.getText().toString();
         etUserName.setText("");
         presenter.loadNetData(request);

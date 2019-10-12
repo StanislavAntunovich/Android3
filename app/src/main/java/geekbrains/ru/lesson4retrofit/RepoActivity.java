@@ -7,8 +7,9 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import geekbrains.ru.lesson4retrofit.data.entities.RepoEntity;
 
+import static geekbrains.ru.lesson4retrofit.MainActivity.REPO_MODEL_KEY;
+
 public class RepoActivity extends AppCompatActivity {
-    public static final String REPO_MODEL_KEY = "repo_model_key";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
