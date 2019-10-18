@@ -2,6 +2,7 @@ package geekbrains.ru.lesson4retrofit.data.entities;
 
 import androidx.annotation.NonNull;
 import androidx.room.Entity;
+import androidx.room.Ignore;
 import androidx.room.PrimaryKey;
 
 import com.google.gson.annotations.SerializedName;
@@ -23,6 +24,7 @@ public class UserEntity extends RealmObject implements Serializable {
     private String avatarUrl;
     private String url;
 
+    @Ignore
     public UserEntity() {
     }
 

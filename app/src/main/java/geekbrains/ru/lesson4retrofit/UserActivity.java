@@ -48,17 +48,7 @@ public class UserActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         presenter.bindView(getProgressObserver(), adapter.subscribe(), name);
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        presenter.unbindView();
-        adapter.unsubscribe();
-    }
-
-    private void initRecycler() {
-        adapter = new ReposAdapter(new DisposableObserver<RepoEntity>() {
+        adapter.subscribeOnClick(new DisposableObserver<RepoEntity>() {
             @Override
             public void onNext(RepoEntity repoEntity) {
                 startRepoActivity(repoEntity);
@@ -74,6 +64,17 @@ public class UserActivity extends AppCompatActivity {
 
             }
         });
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        presenter.unbindView();
+        adapter.unsubscribe();
+    }
+
+    private void initRecycler() {
+        adapter = new ReposAdapter();
 
         RecyclerView rv = findViewById(R.id.rv_repos);
         rv.setLayoutManager(new LinearLayoutManager(this));

@@ -9,6 +9,7 @@ import geekbrains.ru.lesson4retrofit.data.DataHelper;
 import geekbrains.ru.lesson4retrofit.data.NetworkHelper;
 import geekbrains.ru.lesson4retrofit.di.modules.AppModule;
 import geekbrains.ru.lesson4retrofit.di.modules.DataModule;
+import geekbrains.ru.lesson4retrofit.di.modules.NetworkModule;
 import geekbrains.ru.lesson4retrofit.di.modules.PresenterModule;
 import geekbrains.ru.lesson4retrofit.di.modules.RetrofitModule;
 import geekbrains.ru.lesson4retrofit.presenters.MainPresenter;
@@ -24,4 +25,6 @@ public interface AppComponent {
     void inject(UsersPresenter presenter);
     void inject(NetworkHelper helper);
     void inject(DataHelper helper);
+
+    NetworkComponent getNetworkComponent(NetworkModule module);
 }

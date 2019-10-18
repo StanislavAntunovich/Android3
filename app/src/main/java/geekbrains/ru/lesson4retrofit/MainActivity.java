@@ -17,6 +17,7 @@ import com.facebook.stetho.Stetho;
 
 import javax.inject.Inject;
 
+import geekbrains.ru.lesson4retrofit.DBTests.TestResult;
 import geekbrains.ru.lesson4retrofit.adapters.UsersAdapter;
 import geekbrains.ru.lesson4retrofit.presenters.MainPresenter;
 import io.reactivex.observers.DisposableObserver;
@@ -69,7 +70,17 @@ public class MainActivity extends AppCompatActivity {
 
     private void initRecycler() {
         RecyclerView rv = findViewById(R.id.rv_users);
-        adapter = new UsersAdapter(new DisposableObserver<String>() {
+        adapter = new UsersAdapter();
+
+        rv.setLayoutManager(new LinearLayoutManager(this));
+        rv.setAdapter(adapter);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        presenter.bindView(getProgressObserver(), getResultObserver(), adapter.observeChanges(), GitHubApp.getNetworkComponent(this));
+        adapter.subscribeOnClick(new DisposableObserver<String>() {
             @Override
             public void onNext(String s) {
                 startUserReposActivity(s);
@@ -84,15 +95,6 @@ public class MainActivity extends AppCompatActivity {
             public void onComplete() {
             }
         });
-
-        rv.setLayoutManager(new LinearLayoutManager(this));
-        rv.setAdapter(adapter);
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        presenter.bindView(getProgressObserver(), getResultObserver(), adapter.subscribe());
     }
 
     @Override
@@ -141,16 +143,15 @@ public class MainActivity extends AppCompatActivity {
         };
     }
 
-    private DisposableObserver<String> getResultObserver() {
-        return new DisposableObserver<String>() {
+    private DisposableObserver<TestResult> getResultObserver() {
+        return new DisposableObserver<TestResult>() {
             @Override
-            public void onNext(String aDouble) {
-                tvResult.setText(String.valueOf(aDouble));
-                if (!aDouble.isEmpty()) {
-                    tvCount.setText(String.valueOf(adapter.getItemCount()));
-                } else {
-                    tvCount.setText("");
-                }
+            public void onNext(TestResult result) {
+                String resultTime = result.getTime() == null ? "" : String.valueOf(result.getTime());
+                String resultCount = result.getCount() == null ? "" : String.valueOf(result.getCount());
+
+                tvResult.setText(resultTime);
+                tvCount.setText(resultCount);
             }
 
             @Override

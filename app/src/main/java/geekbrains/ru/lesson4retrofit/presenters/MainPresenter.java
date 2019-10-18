@@ -4,10 +4,12 @@ import java.util.List;
 
 import javax.inject.Inject;
 
+import geekbrains.ru.lesson4retrofit.DBTests.TestResult;
 import geekbrains.ru.lesson4retrofit.data.DataHelper;
 import geekbrains.ru.lesson4retrofit.data.NetworkHelper;
 import geekbrains.ru.lesson4retrofit.data.entities.UserEntity;
 import geekbrains.ru.lesson4retrofit.di.AppComponent;
+import geekbrains.ru.lesson4retrofit.di.NetworkComponent;
 import io.reactivex.Observer;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.observers.DisposableCompletableObserver;
@@ -18,6 +20,7 @@ public class MainPresenter {
     private CompositeDisposable bag = new CompositeDisposable();
     private Observer<Boolean> progress;
     private Observer<List<UserEntity>> data;
+    private NetworkComponent networkComponent;
 
     @Inject
     NetworkHelper networkHelper;
@@ -25,16 +28,20 @@ public class MainPresenter {
     DataHelper dataHelper;
 
 
+
     public MainPresenter(AppComponent component) {
         component.inject(this);
     }
 
+    //TODO убрать обсерверы - обсерверы через методы...оставить result...подумать про прогресс - перенести во все остальные передаваемые снаружи
     public void bindView(
             DisposableObserver<Boolean> progress,
-            DisposableObserver<String> result,
-            DisposableObserver<List<UserEntity>> data) {
+            DisposableObserver<TestResult> result,
+            DisposableObserver<List<UserEntity>> data,
+            NetworkComponent networkComponent) {
         this.progress = progress;
         this.data = data;
+        this.networkComponent = networkComponent;
 
         bag.add(dataHelper.subscribeOnResults().subscribeWith(result));
         initView();
@@ -47,11 +54,17 @@ public class MainPresenter {
         }
     }
 
+    //TODO
     public void unBindView() {
         bag.clear();
     }
 
     public void loadNetData(String request) {
+        if (!networkComponent.isConnected()) {
+            progress.onError(new IllegalStateException("check connection"));
+            return;
+        }
+
         if (request.isEmpty()) {
             bag.add(networkHelper.getAllUsers().subscribeWith(getObserver()));
         } else {

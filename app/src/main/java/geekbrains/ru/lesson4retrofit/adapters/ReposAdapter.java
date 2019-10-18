@@ -16,15 +16,17 @@ import geekbrains.ru.lesson4retrofit.R;
 import geekbrains.ru.lesson4retrofit.data.entities.RepoEntity;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.observers.DisposableObserver;
+import io.reactivex.subjects.PublishSubject;
+import io.reactivex.subjects.Subject;
 
 public class ReposAdapter extends RecyclerView.Adapter<ReposAdapter.ReposViewHolder> {
     private List<RepoEntity> data;
     private CompositeDisposable bag = new CompositeDisposable();
-    private DisposableObserver<RepoEntity> listener;
+    private Subject<RepoEntity> listener;
 
-    public ReposAdapter(DisposableObserver<RepoEntity> listener) {
-        this.listener = listener;
+    public ReposAdapter() {
         this.data = new ArrayList<>();
+        this.listener = PublishSubject.create();
     }
 
     @NonNull
@@ -47,6 +49,10 @@ public class ReposAdapter extends RecyclerView.Adapter<ReposAdapter.ReposViewHol
     @Override
     public int getItemCount() {
         return data.size();
+    }
+
+    public void subscribeOnClick(DisposableObserver<RepoEntity> observer) {
+        bag.add(listener.subscribeWith(observer));
     }
 
     public DisposableObserver<List<RepoEntity>> subscribe() {

@@ -15,15 +15,17 @@ import geekbrains.ru.lesson4retrofit.R;
 import geekbrains.ru.lesson4retrofit.data.entities.UserEntity;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.observers.DisposableObserver;
+import io.reactivex.subjects.PublishSubject;
+import io.reactivex.subjects.Subject;
 
 public class UsersAdapter extends RecyclerView.Adapter<UsersAdapter.UsersViewHolder> {
     private List<UserEntity> data;
     private CompositeDisposable bag = new CompositeDisposable();
-    private DisposableObserver<String> listener;
+    private Subject<String> listener;
 
-    public UsersAdapter(DisposableObserver<String> listener) {
+    public UsersAdapter() {
         this.data = new ArrayList<>();
-        this.listener = listener;
+        this.listener = PublishSubject.create();
     }
 
     @NonNull
@@ -46,7 +48,11 @@ public class UsersAdapter extends RecyclerView.Adapter<UsersAdapter.UsersViewHol
         return data.size();
     }
 
-    public DisposableObserver<List<UserEntity>> subscribe() {
+    public void subscribeOnClick(DisposableObserver<String> observer) {
+        bag.add(listener.subscribeWith(observer));
+    }
+
+    public DisposableObserver<List<UserEntity>> observeChanges() {
         DisposableObserver<List<UserEntity>> disposable = new DisposableObserver<List<UserEntity>>() {
             @Override
             public void onNext(List<UserEntity> userEntities) {
