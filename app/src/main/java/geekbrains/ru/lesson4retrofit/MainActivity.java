@@ -4,7 +4,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.StrictMode;
 import android.view.View;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -16,15 +15,12 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.facebook.stetho.Stetho;
 
-import java.util.List;
+import javax.inject.Inject;
 
+import geekbrains.ru.lesson4retrofit.DBTests.TestResult;
 import geekbrains.ru.lesson4retrofit.adapters.UsersAdapter;
-import geekbrains.ru.lesson4retrofit.data.entities.UserEntity;
-import geekbrains.ru.lesson4retrofit.di.DaggerDataComponent;
-import geekbrains.ru.lesson4retrofit.di.DataComponent;
-import geekbrains.ru.lesson4retrofit.di.modules.ActivityModule;
-import geekbrains.ru.lesson4retrofit.di.modules.ApplicationContextModule;
 import geekbrains.ru.lesson4retrofit.presenters.MainPresenter;
+import io.reactivex.observers.DisposableObserver;
 import io.realm.Realm;
 
 
@@ -33,12 +29,16 @@ public class MainActivity extends AppCompatActivity {
     public static final String REPO_MODEL_KEY = "repo_model_key";
 
     private UsersAdapter adapter;
-    private MainPresenter presenter;
+
+    @Inject
+    MainPresenter presenter;
 
     private ProgressBar progressBar;
     private EditText etUserName;
-    private Double timeResult = 0d;
-    private DataComponent component;
+
+    private TextView tvResult;
+    private TextView tvCount;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,112 +46,125 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         Stetho.initializeWithDefaults(this);
+        Realm.init(this);
 
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
 
-        Realm.init(getApplicationContext());
+        progressBar = findViewById(R.id.progressBar);
+        etUserName = findViewById(R.id.editText);
 
-        initPresenter();
+        tvResult = findViewById(R.id.tv_test_time);
+        tvCount = findViewById(R.id.tv_test_items_count);
+
+        GitHubApp.getComponent().inject(this);
 
         initRecycler();
-        initViews();
+        findViewById(R.id.btnLoad).setOnClickListener(this::onClick);
+        findViewById(R.id.btn_save_room).setOnClickListener(v -> presenter.saveAllRoom());
+        findViewById(R.id.btn_save_realm).setOnClickListener(v -> presenter.saveAllRealm());
+        findViewById(R.id.btn_load_room).setOnClickListener(v -> presenter.loadAllRoom());
+        findViewById(R.id.btn_load_realm).setOnClickListener(v -> presenter.loadAllRealm());
+
+    }
+
+    private void initRecycler() {
+        RecyclerView rv = findViewById(R.id.rv_users);
+        adapter = new UsersAdapter();
+
+        rv.setLayoutManager(new LinearLayoutManager(this));
+        rv.setAdapter(adapter);
     }
 
     @Override
     protected void onResume() {
-        presenter.bindView(this);
         super.onResume();
+        presenter.bindView(getProgressObserver(), getResultObserver(), adapter.observeChanges(), GitHubApp.getNetworkComponent(this));
+        adapter.subscribeOnClick(new DisposableObserver<String>() {
+            @Override
+            public void onNext(String s) {
+                startUserReposActivity(s);
+            }
+
+            @Override
+            public void onError(Throwable e) {
+                showError(e.getLocalizedMessage());
+            }
+
+            @Override
+            public void onComplete() {
+            }
+        });
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        presenter.unbindView();
+        presenter.unBindView();
+        adapter.unsubscribe();
     }
 
-    private void initPresenter() {
-        component = DaggerDataComponent.builder()
-                .activityModule(new ActivityModule(this))
-                .applicationContextModule(new ApplicationContextModule(this))
-                .build();
-        presenter = new MainPresenter();
-        component.injectToPresenter(presenter);
-    }
-
-    private void initRecycler() {
-        adapter = new UsersAdapter(model -> presenter.onItemClicked(model));
-        RecyclerView recyclerView = findViewById(R.id.rv_users);
-        recyclerView.setAdapter(adapter);
-        recyclerView.setLayoutManager(new LinearLayoutManager(this));
-    }
-
-    private void initViews() {
-        etUserName = findViewById(R.id.editText);
-        progressBar = findViewById(R.id.progressBar);
-
-        Button btnLoad = findViewById(R.id.btnLoad);
-        btnLoad.setOnClickListener(v -> onClick());
-
-        Button bntSaveRoom = findViewById(R.id.btn_save_room);
-        bntSaveRoom.setOnClickListener(v -> presenter.onRoomSaveClicked(adapter.getData()));
-
-        Button btnSaveRealm = findViewById(R.id.btn_save_realm);
-        btnSaveRealm.setOnClickListener(v -> presenter.onRealmSaveClicked(adapter.getData()));
-
-        Button btnLoadRoom = findViewById(R.id.btn_load_room);
-        btnLoadRoom.setOnClickListener(v -> presenter.onRoomLoadClicked());
-
-        Button btnLoadRealm = findViewById(R.id.btn_load_realm);
-        btnLoadRealm.setOnClickListener(v -> presenter.onRealmLoadClicked());
-    }
-
-    //TODO
     public void startUserReposActivity(String userName) {
         Intent intent = new Intent(this, UserActivity.class);
         intent.putExtra(USER_NAME_KEY, userName);
         startActivity(intent);
     }
 
-    public boolean isNetworkConnected() {
-        return component.isConnected();
-    }
-
-    public void onClick() {
+    public void onClick(View view) {
         String request = etUserName.getText().toString();
         etUserName.setText("");
         presenter.loadNetData(request);
     }
 
-    public void updateResult() {
-        TextView tvResult = findViewById(R.id.tv_test_time);
-        TextView tvCount = findViewById(R.id.tv_test_items_count);
-        tvResult.setText(String.valueOf(timeResult));
-        tvCount.setText(String.valueOf(adapter.getData().size()));
-    }
-
-    public void startProgress() {
-        progressBar.setVisibility(View.VISIBLE);
-    }
-
-    public void stopProgress() {
-        progressBar.setVisibility(View.GONE);
-    }
-
-    public void setResult(Double result) {
-        this.timeResult = result;
-    }
-
-    public void updateRecyclerView() {
-        adapter.notifyDataSetChanged();
-    }
-
-    public void updateRecyclerData(List<UserEntity> data) {
-        adapter.setData(data);
-    }
-
     public void showError(String error) {
         Toast.makeText(this, error, Toast.LENGTH_SHORT).show();
     }
+
+    private void showProgress(boolean toShow) {
+        progressBar.setVisibility(toShow ? View.VISIBLE : View.GONE);
+    }
+
+    private DisposableObserver<Boolean> getProgressObserver() {
+        return new DisposableObserver<Boolean>() {
+            @Override
+            public void onNext(Boolean aBoolean) {
+                showProgress(aBoolean);
+            }
+
+            @Override
+            public void onError(Throwable e) {
+                showError(e.getLocalizedMessage());
+            }
+
+            @Override
+            public void onComplete() {
+
+            }
+        };
+    }
+
+    private DisposableObserver<TestResult> getResultObserver() {
+        return new DisposableObserver<TestResult>() {
+            @Override
+            public void onNext(TestResult result) {
+                String resultTime = result.getTime() == null ? "" : String.valueOf(result.getTime());
+                String resultCount = result.getCount() == null ? "" : String.valueOf(result.getCount());
+
+                tvResult.setText(resultTime);
+                tvCount.setText(resultCount);
+            }
+
+            @Override
+            public void onError(Throwable e) {
+                showError(e.getLocalizedMessage());
+            }
+
+            @Override
+            public void onComplete() {
+
+            }
+        };
+    }
+
 
 }

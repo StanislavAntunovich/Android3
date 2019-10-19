@@ -13,18 +13,19 @@ import java.util.List;
 
 import geekbrains.ru.lesson4retrofit.R;
 import geekbrains.ru.lesson4retrofit.data.entities.UserEntity;
+import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.observers.DisposableObserver;
+import io.reactivex.subjects.PublishSubject;
+import io.reactivex.subjects.Subject;
 
 public class UsersAdapter extends RecyclerView.Adapter<UsersAdapter.UsersViewHolder> {
     private List<UserEntity> data;
-    private OnItemClickListener listener;
+    private CompositeDisposable bag = new CompositeDisposable();
+    private Subject<String> listener;
 
-    public UsersAdapter(OnItemClickListener listener) {
-        this.listener = listener;
+    public UsersAdapter() {
         this.data = new ArrayList<>();
-    }
-
-    public void setData(List<UserEntity> data) {
-        this.data = data;
+        this.listener = PublishSubject.create();
     }
 
     @NonNull
@@ -47,6 +48,36 @@ public class UsersAdapter extends RecyclerView.Adapter<UsersAdapter.UsersViewHol
         return data.size();
     }
 
+    public void subscribeOnClick(DisposableObserver<String> observer) {
+        bag.add(listener.subscribeWith(observer));
+    }
+
+    public DisposableObserver<List<UserEntity>> observeChanges() {
+        DisposableObserver<List<UserEntity>> disposable = new DisposableObserver<List<UserEntity>>() {
+            @Override
+            public void onNext(List<UserEntity> userEntities) {
+                data = userEntities;
+                notifyDataSetChanged();
+            }
+
+            @Override
+            public void onError(Throwable e) {
+
+            }
+
+            @Override
+            public void onComplete() {
+
+            }
+        };
+        bag.add(disposable);
+        return disposable;
+    }
+
+    public void unsubscribe() {
+        bag.clear();
+    }
+
     class UsersViewHolder extends RecyclerView.ViewHolder {
         private TextView tvUserName;
         private TextView tvUserId;
@@ -57,14 +88,9 @@ public class UsersAdapter extends RecyclerView.Adapter<UsersAdapter.UsersViewHol
             tvUserName = itemView.findViewById(R.id.tv_user_name);
             itemView.setOnClickListener(v -> {
                 UserEntity model = data.get(getAdapterPosition());
-                listener.onItemClick(model);
+                listener.onNext(model.getLogin());
             });
         }
     }
-
-    public List<UserEntity> getData() {
-        return data;
-    }
-
 
 }
