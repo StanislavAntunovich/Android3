@@ -14,13 +14,20 @@ public class TestModule {
 
     @Provides
     @Singleton
-    public DataHelper getModel() {
+    public DataHelper getDataHelper() {
         return Mockito.mock(DataHelper.class);
     }
 
     @Provides
     @Singleton
-    public NetworkHelper getUserHelper() {
+    public NetworkHelper getNetworkHelper() {
         return Mockito.mock(NetworkHelper.class);
+    }
+
+    @Provides
+    @Singleton
+    AppComponent getAppComponent() {
+        AppComponent component = Mockito.mock(AppComponent.class);
+        return component;
     }
 }

@@ -10,7 +10,6 @@ import geekbrains.ru.lesson4retrofit.data.NetworkHelper;
 import geekbrains.ru.lesson4retrofit.data.entities.UserEntity;
 import geekbrains.ru.lesson4retrofit.di.AppComponent;
 import geekbrains.ru.lesson4retrofit.di.NetworkComponent;
-import io.reactivex.Observer;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.observers.DisposableCompletableObserver;
 import io.reactivex.observers.DisposableObserver;
@@ -18,8 +17,8 @@ import io.reactivex.observers.DisposableSingleObserver;
 
 public class MainPresenter {
     private CompositeDisposable bag = new CompositeDisposable();
-    private Observer<Boolean> progress;
-    private Observer<List<UserEntity>> data;
+    private DisposableObserver<Boolean> progress;
+    private DisposableObserver<List<UserEntity>> data;
     private NetworkComponent networkComponent;
 
     @Inject
@@ -28,21 +27,23 @@ public class MainPresenter {
     DataHelper dataHelper;
 
 
-
     public MainPresenter(AppComponent component) {
         component.inject(this);
     }
 
-    //TODO убрать обсерверы - обсерверы через методы...оставить result...подумать про прогресс - перенести во все остальные передаваемые снаружи
     public void bindView(
             DisposableObserver<Boolean> progress,
             DisposableObserver<TestResult> result,
             DisposableObserver<List<UserEntity>> data,
-            NetworkComponent networkComponent) {
+            NetworkComponent networkComponent
+    ) {
         this.progress = progress;
         this.data = data;
         this.networkComponent = networkComponent;
 
+        bag.add(this.data);
+        bag.add(this.progress);
+        bag.add(result);
         bag.add(dataHelper.subscribeOnResults().subscribeWith(result));
         initView();
     }
@@ -54,9 +55,9 @@ public class MainPresenter {
         }
     }
 
-    //TODO
     public void unBindView() {
         bag.clear();
+        networkComponent = null;
     }
 
     public void loadNetData(String request) {
@@ -66,9 +67,9 @@ public class MainPresenter {
         }
 
         if (request.isEmpty()) {
-            bag.add(networkHelper.getAllUsers().subscribeWith(getObserver()));
+            networkHelper.getAllUsers().subscribe(getObserver());
         } else {
-            bag.add(networkHelper.loadUser(request).subscribeWith(getObserver()));
+            networkHelper.loadUser(request).subscribe(getObserver());
         }
     }
 
@@ -83,16 +84,16 @@ public class MainPresenter {
     }
 
     public void loadAllRoom() {
-        bag.add(dataHelper
+        dataHelper
                 .testRoomLoadData()
-                .subscribeWith(getObserver()));
+                .subscribe(getObserver());
 
     }
 
     public void loadAllRealm() {
-        bag.add(dataHelper
+        dataHelper
                 .testRealmLoadData()
-                .subscribeWith(getObserver()));
+                .subscribe(getObserver());
 
     }
 

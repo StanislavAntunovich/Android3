@@ -29,7 +29,7 @@ public class NetworkHelper {
         return api.getUserRepos(userName).subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread());
     }
 
-    private Single<UserEntity> singleUser(String name) {
+    private Single<UserEntity> getSingleUser(String name) {
         return api.getUser(name)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread());
@@ -43,7 +43,7 @@ public class NetworkHelper {
 
     public Single<List<UserEntity>> loadUser(String name) {
         return Single.create(emitter -> {
-            singleUser(name).subscribe(result -> {
+            getSingleUser(name).subscribe(result -> {
                 List<UserEntity> list = new ArrayList<>(1);
                 list.add(result);
                 emitter.onSuccess(list);
